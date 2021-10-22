@@ -90,7 +90,7 @@ async def main():
     limit = int(input("搬运数量上限(输入0不设限): "))
     if limit == 0 or limit == None:
         limit = None
-    interval = float(input("请设置请求间隔(秒):"))
+    interval = float(input("请设置每一百个请求的间隔(秒):"))
     time_select = input("是否指定时间范围\n1.是 2.否\n")
     messages = []
     if time_select == "1":
