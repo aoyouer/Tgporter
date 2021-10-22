@@ -4,7 +4,6 @@ from telethon.tl.functions.channels import LeaveChannelRequest
 from telethon.errors import UserAlreadyParticipantError, FloodWaitError
 from datetime import datetime, tzinfo
 import pytz
-import time
 import telethon
 
 PROXY_TYPE_SOCKS4 = SOCKS4 = "socks4"
@@ -103,11 +102,11 @@ async def main():
             end_date_str, "%Y-%m-%d").replace(tzinfo=utc)
         print("搬运", start_date, "至", end_date, "范围内的内容")
         messages = client.iter_messages(
-            input_channel, reverse=True, limit=limit, offset_date=start_date)
+            input_channel, reverse=True, limit=limit, offset_date=start_date, wait_time=interval)
 
     else:
         messages = client.iter_messages(
-            input_channel, reverse=True, limit=limit)
+            input_channel, reverse=True, limit=limit, wait_time=interval)
 
     async for message in messages:
         # 循环中对消息时间进行判断
@@ -143,7 +142,6 @@ async def main():
                     # 分组发生变化，先发送文件
                     message_count += 1
                     await send_files(output_channel)
-            time.sleep(1)
         # else:
             # print(message)
     if recorded_grouped_id != None:
