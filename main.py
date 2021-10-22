@@ -5,7 +5,7 @@ from telethon.errors import UserAlreadyParticipantError, FloodWaitError
 from datetime import datetime, tzinfo
 import pytz
 import telethon
-
+import time
 PROXY_TYPE_SOCKS4 = SOCKS4 = "socks4"
 PROXY_TYPE_SOCKS5 = SOCKS5 = "socks5"
 PROXY_TYPE_HTTP = HTTP = "http"
@@ -13,7 +13,7 @@ PROXY_TYPE_HTTP = HTTP = "http"
 # --------------------------配置部分------------------------
 # 之后换成获取本地时区
 utc = pytz.UTC
-api_id =
+api_id = 
 api_hash = ''
 # 设置代理
 proxy_server = "127.0.0.1"
@@ -91,6 +91,7 @@ async def main():
     if limit == 0 or limit == None:
         limit = None
     interval = float(input("请设置每一百个请求的间隔(秒):"))
+    msg_interval = int(input("请输入消息之间的间隔(秒):"))
     time_select = input("是否指定时间范围\n1.是 2.否\n")
     messages = []
     if time_select == "1":
@@ -116,6 +117,7 @@ async def main():
                 print("时间超出，结束搬运")
                 break
         if isinstance(message, telethon.tl.patched.Message):
+            time.sleep(msg_interval)
             # 针对合并发送的文件(如相册)要特殊处理
             if message.grouped_id == None:
                 # 普通消息直接转发
