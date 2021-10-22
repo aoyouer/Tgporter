@@ -17,7 +17,7 @@ api_id =
 api_hash = ''
 # 设置代理
 proxy_server = "127.0.0.1"
-proxy_server_port = 10809
+proxy_server_port = 1080
 proxy_mode = PROXY_TYPE_HTTP
 proxy_link = (proxy_mode, proxy_server, proxy_server_port)
 proxy_enable = False
@@ -90,7 +90,7 @@ async def main():
     limit = int(input("搬运数量上限(输入0不设限): "))
     if limit == 0 or limit == None:
         limit = None
-    interval = int(input("请设置请求间隔(秒):"))
+    interval = float(input("请设置请求间隔(秒):"))
     time_select = input("是否指定时间范围\n1.是 2.否\n")
     messages = []
     if time_select == "1":
@@ -123,12 +123,14 @@ async def main():
                 if len(message_list) != 0:
                     await send_files(output_channel)
                 message_count += 1
-                print("普通消息转发 消息日期:", message.date, "消息计数:", message_count)
+                print("普通消息转发 消息日期:", message.date, "消息计数:",
+                      message_count, "请求计数:", str(request_count))
                 await client.send_message(output_channel, message)
             else:
                 # recorded_group_id 初始化
                 if recorded_grouped_id == None:
-                    print("发现文件集合 消息日期:", message.date, "消息计数:", message_count)
+                    print("发现文件集合 消息日期:", message.date, "消息计数:",
+                          message_count, "请求计数:", str(request_count))
                     recorded_grouped_id = message.grouped_id
                     recorded_caption = message.message
 
@@ -145,7 +147,7 @@ async def main():
     if recorded_grouped_id != None:
         message_count += 1
         await send_files(output_channel)
-    print("完成搬运 消息计数:" + str(message_count), "请求计数:", str(request_count))
+    print("完成搬运 消息总数:" + str(message_count), "请求总数:", str(request_count))
 
 with client:
     client.loop.run_until_complete(main())
