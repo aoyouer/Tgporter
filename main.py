@@ -13,8 +13,10 @@ PROXY_TYPE_HTTP = HTTP = "http"
 # --------------------------配置部分------------------------
 # 之后换成获取本地时区
 utc = pytz.UTC
-api_id = 
+api_id =
 api_hash = ''
+# 每批次发送多少条消息
+MASSIVE_THRESHOLD = 1000
 # 设置代理
 proxy_server = "127.0.0.1"
 proxy_server_port = 1080
@@ -90,9 +92,16 @@ async def main():
     limit = int(input("搬运数量上限(输入0不设限): "))
     if limit == 0 or limit == None:
         limit = None
-    interval = float(input("请设置每一百个请求的间隔(秒):"))
-    msg_interval = int(input("请输入消息之间的间隔(秒):"))
+    interval = float(input("请设置消息列表请求的间隔(秒):"))
+    msg_interval = float(input("请输入消息之间的间隔(秒):"))
+    massive_interval = int(
+        input("大量请求间隔(每"+str(MASSIVE_THRESHOLD)+"条消息之间休息多少秒):"))
     time_select = input("是否指定时间范围\n1.是 2.否\n")
+    enable_offset = input("是否要指定续传点:\n1.是 2.否\n")
+    if enable_offset == "1":
+        offset_id = int(input("请指定续传id:")) - 1
+    else:
+        offset_id = 0
     messages = []
     if time_select == "1":
         start_date_str = input("请输入开始日期(UTC) eg: 2021-1-1\n")
@@ -103,12 +112,12 @@ async def main():
             end_date_str, "%Y-%m-%d").replace(tzinfo=utc)
         print("搬运", start_date, "至", end_date, "范围内的内容")
         messages = client.iter_messages(
-            input_channel, reverse=True, limit=limit, offset_date=start_date, wait_time=interval)
+            input_channel, reverse=True, limit=limit, offset_date=start_date, wait_time=interval, offset_id=offset_id)
 
     else:
         messages = client.iter_messages(
-            input_channel, reverse=True, limit=limit, wait_time=interval)
-
+            input_channel, reverse=True, limit=limit, wait_time=interval, offset_id=offset_id)
+    start_time = time.time()
     async for message in messages:
         # 循环中对消息时间进行判断
         request_count += 1
@@ -118,27 +127,33 @@ async def main():
                 break
         if isinstance(message, telethon.tl.patched.Message):
             time.sleep(msg_interval)
+            # print("DEBUG:",message)
             # 针对合并发送的文件(如相册)要特殊处理
+            if massive_interval != 0:
+                if message_count % MASSIVE_THRESHOLD == 0 and message_count != 0 and massive_interval != 0:
+                    print("搬运批次完成,休息", massive_interval, "秒")
+                    time.sleep(massive_interval)
+                    print("休息结束, 继续工作")
             if message.grouped_id == None:
                 # 普通消息直接转发
                 # 如果前面还有文件则先发送文件
                 if len(message_list) != 0:
                     await send_files(output_channel)
                 message_count += 1
-                print("普通消息转发 消息日期:", message.date, "消息计数:",
-                      message_count, "请求计数:", str(request_count))
+                print("普通消息转发", "消息id:", message.id, "消息日期:", message.date, "消息计数:",
+                      message_count, "请求计数:", str(request_count), "耗时: {:.2f}秒".format(time.time() - start_time))
                 await client.send_message(output_channel, message)
             else:
                 # recorded_group_id 初始化
                 if recorded_grouped_id == None:
-                    print("发现文件集合 消息日期:", message.date, "消息计数:",
-                          message_count, "请求计数:", str(request_count))
+                    print("发现文件集合", "消息id:", message.id, "消息日期:", message.date, "消息计数:",
+                          message_count, "请求计数:", str(request_count), "耗时: {:.2f}秒".format(time.time() - start_time))
                     recorded_grouped_id = message.grouped_id
                     recorded_caption = message.message
 
                 if recorded_grouped_id == message.grouped_id:
                     # 记录到临时文件列表中，当grouped_id改变后一起发送
-                    print("文件加入列表")
+                    print("文件加入列表 消息id:", message.id)
                     message_list.append(message)
                 else:
                     # 分组发生变化，先发送文件
