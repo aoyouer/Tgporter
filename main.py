@@ -93,9 +93,9 @@ async def main():
     if limit == 0 or limit == None:
         limit = None
     interval = float(input("请设置消息列表请求的间隔(秒):"))
-    msg_interval = float(input("请输入消息之间的间隔(秒):"))
-    massive_interval = int(
-        input("大量请求间隔(每"+str(MASSIVE_THRESHOLD)+"条消息之间休息多少秒):"))
+    msg_interval = float(input("请输入发送消息之间的间隔(秒):"))
+    # massive_interval = int(
+    #     input("大量请求间隔(每"+str(MASSIVE_THRESHOLD)+"条消息之间休息多少秒):"))
     time_select = input("是否指定时间范围\n1.是 2.否\n")
     enable_offset = input("是否要指定续传点:\n1.是 2.否\n")
     if enable_offset == "1":
@@ -129,11 +129,11 @@ async def main():
             time.sleep(msg_interval)
             # print("DEBUG:",message)
             # 针对合并发送的文件(如相册)要特殊处理
-            if massive_interval != 0:
-                if message_count % MASSIVE_THRESHOLD == 0 and message_count != 0 and massive_interval != 0:
-                    print("搬运批次完成,休息", massive_interval, "秒")
-                    time.sleep(massive_interval)
-                    print("休息结束, 继续工作")
+            # if massive_interval != 0:
+            #     if message_count % MASSIVE_THRESHOLD == 0 and message_count != 0 and massive_interval != 0:
+            #         print("搬运批次完成,休息", massive_interval, "秒")
+            #         time.sleep(massive_interval)
+            #         print("休息结束, 继续工作")
             if message.grouped_id == None:
                 # 普通消息直接转发
                 # 如果前面还有文件则先发送文件
