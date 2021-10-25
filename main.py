@@ -34,6 +34,7 @@ recorded_caption = ""
 message_list = []
 message_count = 0
 request_count = 0
+last_id = 0
 
 
 async def send_files(target_id):
@@ -140,12 +141,14 @@ async def main():
                 if len(message_list) != 0:
                     await send_files(output_channel)
                 message_count += 1
+                last_id = message.id
                 print("普通消息转发", "消息id:", message.id, "消息日期:", message.date, "消息计数:",
                       message_count, "请求计数:", str(request_count), "耗时: {:.2f}秒".format(time.time() - start_time))
                 await client.send_message(output_channel, message)
             else:
                 # recorded_group_id 初始化
                 if recorded_grouped_id == None:
+                    last_id = message.id
                     print("发现文件集合", "消息id:", message.id, "消息日期:", message.date, "消息计数:",
                           message_count, "请求计数:", str(request_count), "耗时: {:.2f}秒".format(time.time() - start_time))
                     recorded_grouped_id = message.grouped_id
@@ -153,6 +156,7 @@ async def main():
 
                 if recorded_grouped_id == message.grouped_id:
                     # 记录到临时文件列表中，当grouped_id改变后一起发送
+                    last_id = message.id
                     print("文件加入列表 消息id:", message.id)
                     message_list.append(message)
                 else:
@@ -164,7 +168,7 @@ async def main():
     if recorded_grouped_id != None:
         message_count += 1
         await send_files(output_channel)
-    print("完成搬运 消息总数:" + str(message_count), "请求总数:", str(request_count))
+    print("完成搬运 消息总数:" + str(message_count), "请求总数:", str(request_count), "最后消息id:", last_id)
 
 with client:
     client.loop.run_until_complete(main())
